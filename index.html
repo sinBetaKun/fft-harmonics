@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>リアルタイムFFT倍音解析</title>
+<style>
+  body { font-family: monospace; background:#111; color:#0f0; padding:20px; }
+    button { font-size:18px; padding:10px; }
+      #freq { font-size:24px; margin-top:10px; }
+        #harmonics { margin-top:20px; white-space:pre; }
+        </style>
+        </head>
+        <body>
+
+        <button id="start">開始</button>
+        <div id="freq">基音: --- Hz</div>
+        <div id="harmonics"></div>
+
+        <script>
+        let audioContext, analyser, data;
+
+        document.getElementById("start").onclick = async () => {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+            audioContext = new AudioContext();
+              const source = audioContext.createMediaStreamSource(stream);
+
+                analyser = audioContext.createAnalyser();
+                  analyser.fftSize = 4096;
+
+                    source.connect(analyser);
+
+                      const bufferLength = analyser.frequencyBinCount;
+                        data = new Float32Array(bufferLength);
+
+                          loop();
+                          };
+
+                          function findFundamental(data, threshold = -70) {
+                            for (let i = 1; i < data.length; i++) {
+                                if (data[i] > threshold) return i;
+                                  }
+                                    return 0;
+                                    }
+
+                                    function getHarmonics() {
+                                      analyser.getFloatFrequencyData(data);
+
+                                        const nyquist = audioContext.sampleRate / 2;
+
+                                          // 基音（低周波側ピーク）
+                                            const baseIndex = findFundamental(data);
+                                              if (baseIndex === 0) return null;
+
+                                                const baseFreq = baseIndex * nyquist / data.length;
+                                                  const baseAmp = data[baseIndex];
+
+                                                    const result = [];
+
+                                                      for (let n = 1; n <= 10; n++) {
+                                                          const targetFreq = baseFreq * n;
+                                                              let index = Math.round(targetFreq / nyquist * data.length);
+
+                                                                  if (index >= data.length) break;
+
+                                                                      // ±2ビン探索（精度向上）
+                                                                          let best = index;
+                                                                              for (let i = -2; i <= 2; i++) {
+                                                                                    if (data[index + i] > data[best]) best = index + i;
+                                                                                        }
+
+                                                                                            const amp = data[best];
+                                                                                                const ratio = Math.pow(10, (amp - baseAmp) / 20);
+
+                                                                                                    result.push({ n, freq: targetFreq, ratio });
+                                                                                                      }
+
+                                                                                                        return { baseFreq, harmonics: result };
+                                                                                                        }
+
+                                                                                                        function loop() {
+                                                                                                          const res = getHarmonics();
+
+                                                                                                            if (res) {
+                                                                                                                document.getElementById("freq").textContent =
+                                                                                                                      "基音: " + res.baseFreq.toFixed(2) + " Hz";
+
+                                                                                                                          let text = "";
+                                                                                                                              for (const h of res.harmonics) {
+                                                                                                                                    text += `${h.n}倍音: ${h.ratio.toFixed(3)}\n`;
+                                                                                                                                        }
+                                                                                                                                            document.getElementById("harmonics").textContent = text;
+                                                                                                                                              }
+
+                                                                                                                                                requestAnimationFrame(loop);
+                                                                                                                                                }
+                                                                                                                                                </script>
+
+                                                                                                                                                </body>
+                                                                                                                                                </html>
