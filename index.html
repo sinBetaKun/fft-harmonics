@@ -39,15 +39,11 @@ document.getElementById("start").onclick = async () => {
   loop();
 };
 
-function findFundamental(data) {
-  let best = data[0], index = 0;
+function findFundamental(data, threshold = -70) {
   for (let i = 1; i < data.length; i++) {
-    if (data[i] > best) {
-      index = i;
-      best = data[i];
-    }
+    if (data[i] > threshold) return i;
   }
-  return index;
+  return 0;
 }
 
 function getHarmonics() {
@@ -57,6 +53,7 @@ function getHarmonics() {
 
   // 基音（低周波側ピーク）
   const baseIndex = findFundamental(data);
+  if (baseIndex ===0) return null;
 
   const baseFreq = baseIndex * nyquist / data.length;
   const baseAmp = data[baseIndex];
@@ -88,15 +85,18 @@ function getHarmonics() {
 }
 
 function loop() {
-  const res = getHarmonics(); 
-  document.getElementById("freq").textContent =
+  const res = getHarmonics();
+  if (res) {
+    document.getElementById("freq").textContent =
       "基音: " + res.baseFreq.toFixed(2) + " Hz";
 
-  let text = "";
-  for (const h of res.harmonics) {
-    text += `${h.n}倍音: ${h.ratio.toFixed(8)}\n`;
-  }
-  document.getElementById("harmonics").textContent = text;
+    let text = "";
+    for (const h of res.harmonics) {
+      text += `${h.n}倍音: ${h.ratio.toFixed(8)}\n`;
+    }
+
+    document.getElementById("harmonics").textContent = text;
+  } 
 
   requestAnimationFrame(loop);
 }
@@ -104,6 +104,7 @@ function loop() {
 function update() {
   if (!analyser || !data) return;
   const res = getHarmonics();
+  if(!res)return;
   for (let i = 0; i < res.harmonics.length; i++) {
     spe[i] = res.harmonics[i].ratio;
   }
