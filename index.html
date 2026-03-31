@@ -123,7 +123,10 @@ function start() {
     gain.gain.value = vol * spe[i];
     gain.connect(audioContext2.destination);
     oscs[i].connect(gain);
-    oscs[i].start();
+  }
+  for (const o of oscs)
+  {
+    o.start();
   }
 }
 
