@@ -16,8 +16,10 @@
 <div id="freq">基音: --- Hz</div>
 <div id="harmonics"></div>
 <button onclick="update()">更新</button>
+<div id="harmonics2"></div>
 <button onclick="start()">再生</button>
 <button onclick="stop()">停止</button>
+
 
 <script>
 let audioContext, audioContext2, analyser, data, spe = new Float32Array(15), oscs = [];
@@ -105,9 +107,13 @@ function update() {
   if (!analyser || !data) return;
   const res = getHarmonics();
   if(!res)return;
+  let text = "";
   for (let i = 0; i < res.harmonics.length; i++) {
-    spe[i] = res.harmonics[i].ratio;
+    const h = res.harmonics[i];
+    spe[i] = h.ratio;
+    text += `${h.n}倍音: ${h.ratio.toFixed(8)}\n`;
   }
+  document.getElementById("harmonics2").textContent = text;
 }
 
 const vol =0.001;
