@@ -110,7 +110,7 @@ function update() {
   }
 }
 
-const vol =0.00;
+const vol =0.001;
   
 function start() {
   if (!audioContext2) audioContext2 = new AudioContext();
@@ -118,7 +118,7 @@ function start() {
   {
     oscs[i] = audioContext2.createOscillator();
     oscs[i].type = "sine"; // ← 正弦波
-    oscs[i].frequency.value = 440 * (i+1); // A4（ラの音）
+    oscs[i].frequency.value = 220 * (i+1); // A4（ラの音）
     const gain = audioContext2.createGain();
     gain.gain.value = vol * spe[i];
     gain.connect(audioContext2.destination);
